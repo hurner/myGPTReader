@@ -25,6 +25,11 @@ schedule_channel = "#daily-news"
 
 app = Flask(__name__)
 
+#tianming
+logging.basicConfig(level=logging.INFO)  # root logger级别设置
+logging.basicConfig(format='%(levelname)s:%(asctime)s:%(filename)s:%(lineno)d %(message)s')
+
+#
 slack_app = App(
     token=os.environ.get("SLACK_TOKEN"),
     signing_secret=os.environ.get("SLACK_SIGNING_SECRET"),
@@ -119,8 +124,8 @@ filetype_extension_allowed = ['epub', 'pdf', 'text', 'docx', 'markdown', 'm4a', 
 filetype_voice_extension_allowed = ['m4a', 'webm', 'mp3', 'wav']
 max_file_size = 3 * 1024 * 1024
 
-limiter_message_per_user = 10
-limiter_time_period = 8 * 3600
+limiter_message_per_user = 20
+limiter_time_period = 3600
 limiter = RateLimiter(limit=limiter_message_per_user, period=limiter_time_period)
     
 def dialog_context_keep_latest(dialog_texts, max_length=1):
@@ -239,7 +244,38 @@ def bot_process(event, say, logger):
         else:
             voice_file_path = get_voice_file_from_text(str(gpt_response))
             logger.info(f'=====> Voice file path is {voice_file_path}')
-            slack_app.client.files_upload_v2(file=voice_file_path, channel=channel, thread_ts=parent_thread_ts)
+            response = slack_app.client.files_upload_v2(file=voice_file_path, channel=channel, thread_ts=parent_thread_ts)
+
+            #tianming
+            logging.info(f"files_upload_v2:response: {response}")
+            file_id = response["file"]["id"]
+            # 构造消息块
+            blocks = [
+                {
+                    "type": "section", 
+                    "text": {   
+                        "type": "mrkdwn",
+                        #"text": "<@%s> 回复:" % user_id     
+                    }
+                },
+                {
+                    "type": "divider" 
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "file",
+                            "file_id": file_id  # 使用文件ID
+                        }
+                    ]
+                }
+            ]
+
+            # 发送消息回复
+            slack_app.client.chat_postMessage(channel=channel, blocks=blocks)
+            #tianming
+
     except concurrent.futures.TimeoutError:
         future.cancel()
         err_msg = 'Task timedout(5m) and was canceled.'

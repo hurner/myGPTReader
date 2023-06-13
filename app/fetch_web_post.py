@@ -12,7 +12,7 @@ CF_ACCESS_CLIENT_ID = os.environ.get('CF_ACCESS_CLIENT_ID')
 CF_ACCESS_CLIENT_SECRET = os.environ.get('CF_ACCESS_CLIENT_SECRET')
 
 PHANTOMJSCLOUD_API_KEY = os.environ.get('PHANTOMJSCLOUD_API_KEY')
-PHANTOMJSCLOUD_WEBSITES = ['https://twitter.com/', 'https://t.co/', 'https://medium.com/', 'https://app.mailbrew.com/', 'https://us12.campaign-archive.com', 'https://news.ycombinator.com', 'https://www.bloomberg.com', 'https://*.substack.com/*', 'https://*.1point3acres.com/*', 'https://www.v2ex.com', 'https://www.producthunt.com', 'http://xueqiu.com', 'https://www.jisilu.cn', 'https://www.163.com']
+PHANTOMJSCLOUD_WEBSITES = ['https://twitter.com/', 'https://t.co/', 'https://medium.com/', 'https://app.mailbrew.com/', 'https://us12.campaign-archive.com', 'https://news.ycombinator.com', 'https://www.bloomberg.com', 'https://*.substack.com/*', 'https://*.1point3acres.com/*', 'https://www.v2ex.com', 'https://www.producthunt.com', 'http://xueqiu.com', 'https://www.jisilu.cn', 'https://www.163.com', 'https://www.pingwest.com']
 
 def check_if_need_use_phantomjscloud(url):
     for site in PHANTOMJSCLOUD_WEBSITES:
@@ -49,12 +49,15 @@ def format_text(text):
     return fix_chinese_split_chunk_size_error
 
 def scrape_website(url: str) -> str:
-    endpoint_url = f"https://web-scraper.i365.tech/?url={url}&selector=div"
+    endpoint_url = f"https://web.hurner.workers.dev/?url={url}&selector=div"
     headers = {
         'CF-Access-Client-Id': CF_ACCESS_CLIENT_ID,
         'CF-Access-Client-Secret': CF_ACCESS_CLIENT_SECRET,
     }
     response = requests.get(endpoint_url, headers=headers)
+    logging.info(f"scrape_website:response: {response}")
+    logging.info(f"CF_ACCESS_CLIENT_ID:: {CF_ACCESS_CLIENT_ID}")
+    logging.info(f"CF_ACCESS_CLIENT_SECRET:: {CF_ACCESS_CLIENT_SECRET}")
     if response.status_code == 200:
         try:
             json_response = response.json()
@@ -80,6 +83,8 @@ def scrape_website_by_phantomjscloud(url: str) -> str:
         }
     }
     response = requests.post(endpoint_url, data=json.dumps(data))
+    logging.info(f"scrape_website_by_phantomjscloud:response: {response}")
+    logging.info(f"PHANTOMJSCLOUD_API_KEY:: {PHANTOMJSCLOUD_API_KEY}")
     if response.status_code == 200:
         try:
             return response.content.decode('utf-8')
