@@ -5,7 +5,7 @@ import feedparser
 import html2text
 import concurrent.futures
 
-from app.gpt import get_answer_from_llama_web
+from app.gpt import get_answer_from_llama_web, get_answer_from_chatGPT
 
 with open("app/data/hot_news_rss.json", "r") as f:
     rss_urls = json.load(f)
@@ -33,13 +33,25 @@ def get_summary_from_gpt_thread(url):
     logging.info(f"=====> GPT response: {gpt_response} (total_llm_model_tokens: {total_llm_model_tokens}, total_embedding_model_tokens: {total_embedding_model_tokens}")
     return str(gpt_response)
 
+def get_translation_from_gpt_thread(description):
+    news_translation_prompt = '请用中文翻译：\n' + description
+    gpt_response, total_llm_model_tokens, total_embedding_model_tokens = get_answer_from_chatGPT([news_translation_prompt])
+    logging.info(f"=====> GPT response: {gpt_response} (total_llm_model_tokens: {total_llm_model_tokens}, total_embedding_model_tokens: {total_embedding_model_tokens}")
+    return str(gpt_response)
+
 def get_summary_from_gpt(url):
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future = executor.submit(get_summary_from_gpt_thread, url)
         return future.result(timeout=300)
 
+def get_translation_from_gpt(description):
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(get_translation_from_gpt_thread, description)
+        return future.result(timeout=300)
+
 def get_description(entry):
     gpt_answer = None
+
     try:
         gpt_answer = get_summary_from_gpt(entry.link)
     except Exception as e:
@@ -48,6 +60,19 @@ def get_description(entry):
         summary = 'AI: ' + gpt_answer
     else:
         summary = cut_string(get_text_from_html(entry.summary))
+    return summary
+
+def get_translation(description):
+    gpt_answer = None
+
+    try:
+        gpt_answer = get_translation_from_gpt(description)
+    except Exception as e:
+        logging.error(e)
+    if gpt_answer is not None:
+        summary = 'AI: ' + gpt_answer
+    else:
+        summary = cut_string(get_text_from_html(description))
     return summary
 
 def get_text_from_html(html):
@@ -68,6 +93,29 @@ def get_post_urls_with_title(rss_url):
         updated_post = {}
         updated_post['title'] = entry.title
         updated_post['summary'] = get_description(entry)
+        updated_post['url'] = entry.link
+        updated_post['publish_date'] = published_time
+        updated_posts.append(updated_post)
+        if len(updated_posts) >= MAX_POSTS:
+            break
+        
+    return updated_posts
+
+def get_twitter_post_urls_with_title(rss_url):
+    feed = feedparser.parse(rss_url)
+    updated_posts = []
+    
+    for entry in feed.entries:
+        published_time = entry.published_parsed if 'published_parsed' in entry else None
+        # published_date = date(published_time.tm_year,
+        #                       published_time.tm_mon, published_time.tm_mday)
+        updated_post = {}
+
+        # title: short of title
+        # summry： translation of title using GPT
+        updated_post['title'] = cut_string(get_text_from_html(entry.title))
+        updated_post['summary'] = get_translation(get_text_from_html(entry.title))
+
         updated_post['url'] = entry.link
         updated_post['publish_date'] = published_time
         updated_posts.append(updated_post)
@@ -116,14 +164,27 @@ def build_hot_news_blocks(news_key):
         rss['name'], hot_news)
     return hot_news_blocks
 
-def build_zhihu_hot_news_blocks():
-    return build_hot_news_blocks('zhihu')
+def build_twitter_hot_news_blocks(news_key):
+    rss = rss_urls[news_key]['rss']['hot']
+    hot_news = get_twitter_post_urls_with_title(rss['url'])
+    hot_news_blocks = build_slack_blocks(
+        rss['name'], hot_news)
+    return hot_news_blocks
+
+def build_openai_hot_news_blocks():
+    return build_hot_news_blocks('OpenAI')
+
+def build_twitter_akhaliq_hot_news_blocks():
+    return build_twitter_hot_news_blocks('twitter-akhaliq')
+
+def build_twitter_brickroad7_hot_news_blocks():
+    return build_twitter_hot_news_blocks('twitter-brickroad7')
+
+def build_twitter_teortaxesTex_hot_news_blocks():
+    return build_twitter_hot_news_blocks('twitter-teortaxesTex')
 
 def build_v2ex_hot_news_blocks():
     return build_hot_news_blocks('v2ex')
-
-def build_1point3acres_hot_news_blocks():
-    return build_hot_news_blocks('1point3acres')
 
 def build_reddit_news_hot_news_blocks():
     return build_hot_news_blocks('reddit-news')
@@ -137,29 +198,32 @@ def build_producthunt_news_hot_news_blocks():
 def build_xueqiu_news_hot_news_blocks():
     return build_hot_news_blocks('xueqiu')
 
-def build_jisilu_news_hot_news_blocks():
-    return build_hot_news_blocks('jisilu')
 
 def build_all_news_block():
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        zhihu_news = executor.submit(build_zhihu_hot_news_blocks)
+
+        openai_news = executor.submit(build_openai_hot_news_blocks)
+        twitter_akhaliq_news =  executor.submit(build_twitter_akhaliq_hot_news_blocks)
+        twitter_brickroad7_news =  executor.submit(build_twitter_brickroad7_hot_news_blocks)
+        twitter_teortaxesTex_news =  executor.submit(build_twitter_teortaxesTex_hot_news_blocks)
+
         v2ex_news = executor.submit(build_v2ex_hot_news_blocks)
-        onepoint3acres_news = executor.submit(build_1point3acres_hot_news_blocks)
         reddit_news = executor.submit(build_reddit_news_hot_news_blocks)
         hackernews_news = executor.submit(build_hackernews_news_hot_news_blocks)
         producthunt_news = executor.submit(build_producthunt_news_hot_news_blocks)
         xueqiu_news = executor.submit(build_xueqiu_news_hot_news_blocks)
-        jisilu_news = executor.submit(build_jisilu_news_hot_news_blocks)
 
-        zhihu_news_block = zhihu_news.result()
+        openai_news_block = openai_news.result()
+        twitter_akhaliq_news_block = twitter_akhaliq_news.result()
+        twitter_brickroad7_news_block = twitter_brickroad7_news.result()
+        twitter_teortaxesTex_news_block = twitter_teortaxesTex_news.result()
+
         v2ex_news_block = v2ex_news.result()
-        onepoint3acres_news_block = onepoint3acres_news.result()
         reddit_news_block = reddit_news.result()
         hackernews_news_block = hackernews_news.result()
         producthunt_news_block = producthunt_news.result()
         xueqiu_news_block = xueqiu_news.result()
-        jisilu_news_block = jisilu_news.result()
 
-        return [zhihu_news_block, v2ex_news_block, onepoint3acres_news_block,
-                           reddit_news_block, hackernews_news_block, producthunt_news_block,
-                           xueqiu_news_block, jisilu_news_block]
+        return [openai_news_block, twitter_akhaliq_news_block, twitter_brickroad7_news_block, 
+                            twitter_teortaxesTex_news_block,v2ex_news_block, reddit_news_block, 
+                            hackernews_news_block, producthunt_news_block, xueqiu_news_block]

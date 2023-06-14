@@ -3,35 +3,35 @@
         "name": "OpenAI",
         "rss": {
             "hot": {
-                "name": "OpenAI",
+                "name": "OpenAI Blog",
                 "url": "https://rsshub.app/openai/blog"
             }
         }
     },
-    "twitter-_akhaliq": {
+    "twitter-akhaliq": {
         "name": "twitter",
         "rss": {
             "hot": {
-                "name": "知乎热榜",
-                "url": "https://rsshub.app/twitter/user/_akhaliq/readable=1&authorNameBold=1&showAuthorInTitle=1&showAuthorInDesc=1&showQuotedAuthorAvatarInDesc=1&showAuthorAvatarInDesc=1&showEmojiForRetweetAndReply=1&showRetweetTextInTitle=0&addLinkForPics=1&showTimestampInDescription=1&showQuotedInTitle=1&heightOfPics=150&count=30"
+                "name": "akhaliq Twitter",
+                "url": "https://nitter.net/_akhaliq/rss"
             }
         }
     },
     "twitter-brickroad7": {
-        "name": "twitter-brickroad7",
+        "name": "brickroad7 Twitter",
         "rss": {
             "hot": {
-                "name": "twitter-brickroad7",
-                "url": "https://rsshub.app/twitter/user/brickroad7/readable=1&authorNameBold=1&showAuthorInTitle=1&showAuthorInDesc=1&showQuotedAuthorAvatarInDesc=1&showAuthorAvatarInDesc=1&showEmojiForRetweetAndReply=1&showRetweetTextInTitle=0&addLinkForPics=1&showTimestampInDescription=1&showQuotedInTitle=1&heightOfPics=150&count=30"
+                "name": "brickroad7 Twitter",
+                "url": "https://nitter.net/brickroad7/rss"
             }
         }
     },
     "twitter-teortaxesTex": {
-        "name": "twitter-teortaxesTex",
+        "name": "teortaxesTex Twitter",
         "rss": {
             "hot": {
-                "name": "twitter-teortaxesTex",
-                "url": "https://rsshub.app/twitter/user/teortaxesTex/readable=1&authorNameBold=1&showAuthorInTitle=1&showAuthorInDesc=1&showQuotedAuthorAvatarInDesc=1&showAuthorAvatarInDesc=1&showEmojiForRetweetAndReply=1&showRetweetTextInTitle=0&addLinkForPics=1&showTimestampInDescription=1&showQuotedInTitle=1&heightOfPics=150&count=30"
+                "name": "teortaxesTex Twitter",
+                "url": "https://nitter.net/teortaxesTex/rss"
             }
         }
     },
