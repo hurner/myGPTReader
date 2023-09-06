@@ -11,14 +11,17 @@ from slack_bolt.adapter.flask import SlackRequestHandler
 from slack_bolt.error import BoltUnhandledRequestError
 import concurrent.futures
 from app.daily_hot_news import build_all_news_block
-from app.gpt import get_answer_from_chatGPT, get_answer_from_llama_file, get_answer_from_llama_web, get_text_from_whisper, get_voice_file_from_text, index_cache_file_dir
+from app.gpt import get_answer_from_chatGPT, get_answer_from_llama_file, get_answer_from_llama_web, \
+    get_text_from_whisper, get_voice_file_from_text, index_cache_file_dir
 from app.rate_limiter import RateLimiter
 from app.user import get_user, is_premium_user, update_message_token_usage
 from app.util import md5
 import json
 
+
 class Config:
     SCHEDULER_API_ENABLED = True
+
 
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
 
@@ -26,7 +29,7 @@ schedule_channel = "#daily-news"
 
 app = Flask(__name__)
 
-#tianming
+# tianming
 logging.basicConfig(level=logging.INFO)  # root logger级别设置
 logging.basicConfig(format='%(levelname)s:%(asctime)s:%(filename)s:%(lineno)d %(message)s')
 
@@ -38,12 +41,14 @@ slack_app = App(
 )
 slack_handler = SlackRequestHandler(slack_app)
 
+
 @slack_app.error
 def handle_errors(error):
     if isinstance(error, BoltUnhandledRequestError):
         return BoltResponse(status=200, body="")
     else:
         return BoltResponse(status=500, body="Something Wrong")
+
 
 scheduler = APScheduler()
 scheduler.api_enabled = True
@@ -69,18 +74,23 @@ def send_daily_news(client, news):
         except Exception as e:
             logging.error(e)
 
+
 @scheduler.task('cron', id='daily_news_task', hour=1, minute=30)
 def schedule_news():
     logging.info("=====> Start to send daily news!")
     all_news_blocks = build_all_news_block()
     send_daily_news(slack_app.client, all_news_blocks)
 
+
+schedule_news()
+
+
 @app.route("/slack/events", methods=["POST"])
 def slack_events():
     return slack_handler.handle(request)
 
-def insert_space(text):
 
+def insert_space(text):
     # Handling the case between English words and Chinese characters
     text = re.sub(r'([a-zA-Z])([\u4e00-\u9fa5])', r'\1 \2', text)
     text = re.sub(r'([\u4e00-\u9fa5])([a-zA-Z])', r'\1 \2', text)
@@ -97,8 +107,10 @@ def insert_space(text):
 
     return text
 
+
 thread_message_history = {}
 MAX_THREAD_MESSAGE_HISTORY = 10
+
 
 def update_thread_history(thread_ts, message_str=None, urls=None, file=None):
     if urls is not None:
@@ -115,6 +127,7 @@ def update_thread_history(thread_ts, message_str=None, urls=None, file=None):
     if file is not None:
         thread_message_history[thread_ts]['file'] = file
 
+
 def extract_urls_from_event(event):
     if 'blocks' not in event:
         return None
@@ -127,6 +140,7 @@ def extract_urls_from_event(event):
                     urls.add(url)
     return list(urls)
 
+
 filetype_extension_allowed = ['epub', 'pdf', 'text', 'docx', 'markdown', 'm4a', 'webm', 'mp3', 'wav']
 filetype_voice_extension_allowed = ['m4a', 'webm', 'mp3', 'wav']
 max_file_size = 3 * 1024 * 1024
@@ -134,11 +148,13 @@ max_file_size = 3 * 1024 * 1024
 limiter_message_per_user = 20
 limiter_time_period = 3600
 limiter = RateLimiter(limit=limiter_message_per_user, period=limiter_time_period)
-    
+
+
 def dialog_context_keep_latest(dialog_texts, max_length=1):
     if len(dialog_texts) > max_length:
         dialog_texts = dialog_texts[-max_length:]
     return dialog_texts
+
 
 def remove_url_from_text(text, urls):
     # only remove youtube url
@@ -147,13 +163,16 @@ def remove_url_from_text(text, urls):
             text = text.replace('<' + url + '>', '')
     return text
 
+
 def format_dialog_text(text, voicemessage=None):
     if text is None:
         return voicemessage if voicemessage else ''
     return insert_space(text.replace("<@U051JKES6Q1>", "")) + ('\n' + voicemessage if voicemessage else '')
 
+
 def generate_message_id(channel, thread_ts):
     return f"{channel}-{thread_ts}"
+
 
 def update_token_usage(event, total_llm_model_tokens, total_embedding_model_tokens):
     logging.info("=====> Start to update token usage!")
@@ -162,14 +181,16 @@ def update_token_usage(event, total_llm_model_tokens, total_embedding_model_toke
         message_id = generate_message_id(event["channel"], event["ts"])
         message_type = 'text' if 'text' in event else 'file'
         if 'files' in event:
-             filetype = event['files'][0]["filetype"]
-             if filetype in filetype_voice_extension_allowed:
+            filetype = event['files'][0]["filetype"]
+            if filetype in filetype_voice_extension_allowed:
                 message_type = 'voice'
-        result = update_message_token_usage(user, message_id, message_type, total_llm_model_tokens, total_embedding_model_tokens)
+        result = update_message_token_usage(user, message_id, message_type, total_llm_model_tokens,
+                                            total_embedding_model_tokens)
         if not result:
             logging.error(f"Failed to update message token usage for {message_id}")
     except Exception as e:
         logging.error(e)
+
 
 def bot_process(event, say, logger):
     user = event["user"]
@@ -180,15 +201,17 @@ def bot_process(event, say, logger):
     voicemessage = None
 
     if event.get('files'):
-        file = event['files'][0] # only support one file for one thread
+        file = event['files'][0]  # only support one file for one thread
         logger.info('=====> Received file:')
         logger.info(file)
         filetype = file["filetype"]
         if filetype not in filetype_extension_allowed:
-            say(f'<@{user}>, this filetype is not supported, please upload a file with extension [{", ".join(filetype_extension_allowed)}]', thread_ts=thread_ts)
+            say(f'<@{user}>, this filetype is not supported, please upload a file with extension [{", ".join(filetype_extension_allowed)}]',
+                thread_ts=thread_ts)
             return
         if file["size"] > max_file_size:
-            say(f'<@{user}>, this file size is beyond max file size limit ({max_file_size / 1024 /1024}MB)', thread_ts=thread_ts)
+            say(f'<@{user}>, this file size is beyond max file size limit ({max_file_size / 1024 / 1024}MB)',
+                thread_ts=thread_ts)
             return
         url_private = file["url_private"]
         temp_file_path = index_cache_file_dir / user
@@ -208,7 +231,7 @@ def bot_process(event, say, logger):
 
     parent_thread_ts = event["thread_ts"] if "thread_ts" in event else thread_ts
     if parent_thread_ts not in thread_message_history:
-        thread_message_history[parent_thread_ts] = { 'dialog_texts': [], 'context_urls': set(), 'file': None}
+        thread_message_history[parent_thread_ts] = {'dialog_texts': [], 'context_urls': set(), 'file': None}
 
     if "text" in event or voicemessage:
         urls = extract_urls_from_event(event)
@@ -225,7 +248,7 @@ def bot_process(event, say, logger):
     if file_md5_name is not None:
         if not voicemessage:
             update_thread_history(parent_thread_ts, None, None, file_md5_name)
-    
+
     urls = thread_message_history[parent_thread_ts]['context_urls']
     file = thread_message_history[parent_thread_ts]['file']
 
@@ -235,9 +258,12 @@ def bot_process(event, say, logger):
     # TODO: https://github.com/jerryjliu/llama_index/issues/778
     # if it can get the context_str, then put this prompt into the thread_message_history to provide more context to the chatGPT
     if file is not None:
-        future = executor.submit(get_answer_from_llama_file, dialog_context_keep_latest(thread_message_history[parent_thread_ts]['dialog_texts']), file)
+        future = executor.submit(get_answer_from_llama_file,
+                                 dialog_context_keep_latest(thread_message_history[parent_thread_ts]['dialog_texts']),
+                                 file)
     elif len(urls) > 0:
-        future = executor.submit(get_answer_from_llama_web, thread_message_history[parent_thread_ts]['dialog_texts'], list(urls))
+        future = executor.submit(get_answer_from_llama_web, thread_message_history[parent_thread_ts]['dialog_texts'],
+                                 list(urls))
     else:
         future = executor.submit(get_answer_from_chatGPT, thread_message_history[parent_thread_ts]['dialog_texts'])
 
@@ -251,22 +277,23 @@ def bot_process(event, say, logger):
         else:
             voice_file_path = get_voice_file_from_text(str(gpt_response))
             logger.info(f'=====> Voice file path is {voice_file_path}')
-            response = slack_app.client.files_upload_v2(file=voice_file_path, channel=channel, thread_ts=parent_thread_ts)
+            response = slack_app.client.files_upload_v2(file=voice_file_path, channel=channel,
+                                                        thread_ts=parent_thread_ts)
 
-            #tianming
+            # tianming
             logging.info(f"files_upload_v2:response: {response}")
             file_id = response["file"]["id"]
             # 构造消息块
             blocks = [
                 {
-                    "type": "section", 
-                    "text": {   
+                    "type": "section",
+                    "text": {
                         "type": "mrkdwn",
-                        #"text": "<@%s> 回复:" % user_id     
+                        # "text": "<@%s> 回复:" % user_id
                     }
                 },
                 {
-                    "type": "divider" 
+                    "type": "divider"
                 },
                 {
                     "type": "actions",
@@ -281,13 +308,14 @@ def bot_process(event, say, logger):
 
             # 发送消息回复
             slack_app.client.chat_postMessage(channel=channel, blocks=blocks)
-            #tianming
+            # tianming
 
     except concurrent.futures.TimeoutError:
         future.cancel()
         err_msg = 'Task timedout(5m) and was canceled.'
         logger.warning(err_msg)
         say(f'<@{user}>, {err_msg}', thread_ts=thread_ts)
+
 
 @slack_app.event("app_mention")
 def handle_mentions(event, say, logger):
@@ -298,11 +326,12 @@ def handle_mentions(event, say, logger):
 
     if not limiter.allow_request(user):
         if not is_premium_user(user):
-            say(f'<@{user}>, you have reached the limit of {limiter_message_per_user} messages {limiter_time_period / 3600} hour, please subscribe to our Premium plan to support our service. You can find the payment link by clicking on the bot and selecting the Home tab.', thread_ts=thread_ts)
+            say(f'<@{user}>, you have reached the limit of {limiter_message_per_user} messages {limiter_time_period / 3600} hour, please subscribe to our Premium plan to support our service. You can find the payment link by clicking on the bot and selecting the Home tab.',
+                thread_ts=thread_ts)
             return
-    
+
     bot_process(event, say, logger)
-    
+
 
 def bot_messages(message, next):
     logging.info(message)
@@ -312,15 +341,18 @@ def bot_messages(message, next):
         logging.info(f"This is a message to bot: {message}")
         next()
 
+
 @slack_app.event(event="message", middleware=[bot_messages])
 def log_message(logger, event, say):
     try:
         if is_premium_user(event["user"]):
             bot_process(event, say, logger)
         else:
-            say(f'This feature is exclusive to Premium users. To chat with the bot directly, please subscribe to our Premium plan to support our service. You can find the payment link by clicking on the bot and selecting the Home tab.', thread_ts=event["ts"])
+            say(f'This feature is exclusive to Premium users. To chat with the bot directly, please subscribe to our Premium plan to support our service. You can find the payment link by clicking on the bot and selecting the Home tab.',
+                thread_ts=event["ts"])
     except Exception as e:
         logger.error(f"Error responding to direct message: {e}")
+
 
 @slack_app.event(event="team_join")
 def send_welcome_message(logger, event):
@@ -406,10 +438,12 @@ def send_welcome_message(logger, event):
                 }
             }
         ]
-        r = slack_app.client.chat_postMessage(text='Welcome to myreader.io!', blocks=welcome_message_block, channel=user_id)
+        r = slack_app.client.chat_postMessage(text='Welcome to myreader.io!', blocks=welcome_message_block,
+                                              channel=user_id)
         logger.info(r)
     except Exception as e:
         logger.error(f"Error sending welcome message: {e}")
+
 
 @slack_app.event("app_home_opened")
 def update_home_tab(client, event, logger):
@@ -455,12 +489,12 @@ def update_home_tab(client, event, logger):
             dt_object = datetime.utcfromtimestamp(int(premium_end_date))
             date_string = dt_object.strftime("%m/%d/%Y")
             user_block_info.append({
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": f"*Premium End Date:* {date_string}(UTC)"
-                        }
-                    })
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*Premium End Date:* {date_string}(UTC)"
+                }
+            })
         if payment_link is not None:
             if user_type == 'premium':
                 user_block_info.append({
@@ -562,6 +596,7 @@ def update_home_tab(client, event, logger):
         )
     except Exception as e:
         logger.error(f"Error publishing home tab: {e}")
+
 
 scheduler.start()
 
