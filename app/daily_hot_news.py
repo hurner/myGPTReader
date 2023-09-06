@@ -124,38 +124,66 @@ def get_twitter_post_urls_with_title(rss_url):
         
     return updated_posts
 
+
 def build_slack_blocks(title, news):
-    blocks = [
-        {
-            "type": "header",
-            "text": {
-                "type": "plain_text",
-                "text": f"{title} # {TODAY.strftime('%Y-%m-%d')}"
-            }
-        }]
+    content = []
+
     for news_item in news:
-        blocks.extend([{
-            "type": "section",
-            "text": {
-				"text": f"*{news_item['title']}*",
-				"type": "mrkdwn"
-			},
-        },{
-            "type": "section",
-            "text": {
-				"text": f"{news_item['summary']}",
-				"type": "plain_text"
-			},
-        },{
-            "type": "section",
-            "text": {
-				"text": f"原文链接：<{news_item['url']}>",
-				"type": "mrkdwn"
-			},
-        },{
-            "type": "divider"
+        content.append([{
+            "tag": "a",
+            "text": news_item['title'],
+            "href": news_item['url']
         }])
-    return blocks
+        content.append([{
+            "tag": "text",
+            "text": news_item['summary']
+        }])
+        content.append([{
+            "tag": "text",
+            "text": ""
+        }])
+    data = {
+        "msg_type": "post",
+        "content": {
+            "post": {
+                "zh_cn": {
+                    "title": f"{title} # {TODAY.strftime('%Y-%m-%d')}",
+                    "content": content
+                }
+            }
+        }
+    }
+    # blocks = [
+    #     {
+    #         "type": "header",
+    #         "text": {
+    #             "type": "plain_text",
+    #             "text": f"{title} # {TODAY.strftime('%Y-%m-%d')}"
+    #         }
+    #     }]
+    # for news_item in news:
+    #     blocks.extend([{
+    #         "type": "section",
+    #         "text": {
+    # 			"text": f"*{news_item['title']}*",
+    # 			"type": "mrkdwn"
+    # 		},
+    #     },{
+    #         "type": "section",
+    #         "text": {
+    # 			"text": f"{news_item['summary']}",
+    # 			"type": "plain_text"
+    # 		},
+    #     },{
+    #         "type": "section",
+    #         "text": {
+    # 			"text": f"原文链接：<{news_item['url']}>",
+    # 			"type": "mrkdwn"
+    # 		},
+    #     },{
+    #         "type": "divider"
+    #     }])
+    return data
 
 def build_hot_news_blocks(news_key):
     rss = rss_urls[news_key]['rss']['hot']

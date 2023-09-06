@@ -15,6 +15,7 @@ from app.gpt import get_answer_from_chatGPT, get_answer_from_llama_file, get_ans
 from app.rate_limiter import RateLimiter
 from app.user import get_user, is_premium_user, update_message_token_usage
 from app.util import md5
+import json
 
 class Config:
     SCHEDULER_API_ENABLED = True
@@ -48,17 +49,23 @@ scheduler = APScheduler()
 scheduler.api_enabled = True
 scheduler.init_app(app)
 
+
 def send_daily_news(client, news):
+    url = 'https://open.feishu.cn/open-apis/bot/v2/hook/dbc053b0-8a21-4524-944a-dfc2ae6c1cad'
+    headers = {'Content-Type': 'application/json'}
+
     for news_item in news:
         try:
-            r = client.chat_postMessage(
-                channel=schedule_channel,
-                text="🔥🔥🔥 Daily Hot News 🔥🔥🔥",
-                blocks=news_item,
-                reply_broadcast=True,
-                unfurl_links=False,
-            )
-            logging.info(r)
+            post = requests.post(url, headers=headers, data=json.dumps(news_item))
+            logging.info(json.dumps(news_item), post)
+            # r = client.chat_postMessage(
+            #     channel=schedule_channel,
+            #     text="🔥🔥🔥 Daily Hot News 🔥🔥🔥",
+            #     blocks=news_item,
+            #     reply_broadcast=True,
+            #     unfurl_links=False,
+            # )
+            # logging.info(r)
         except Exception as e:
             logging.error(e)
 
