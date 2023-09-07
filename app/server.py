@@ -61,16 +61,17 @@ def send_daily_news(client, news):
 
     for news_item in news:
         try:
-            post = requests.post(url, headers=headers, data=json.dumps(news_item))
-            logging.info(json.dumps(news_item), post)
-            # r = client.chat_postMessage(
-            #     channel=schedule_channel,
-            #     text="🔥🔥🔥 Daily Hot News 🔥🔥🔥",
-            #     blocks=news_item,
-            #     reply_broadcast=True,
-            #     unfurl_links=False,
-            # )
-            # logging.info(r)
+            post = requests.post(url, headers=headers, data=json.dumps(news_item[0]))
+            logging.info(json.dumps(news_item[0]), post)
+
+            r = client.chat_postMessage(
+                channel=schedule_channel,
+                text="🔥🔥🔥 Daily Hot News 🔥🔥🔥",
+                blocks=news_item[1],
+                reply_broadcast=True,
+                unfurl_links=False,
+            )
+            logging.info(r)
         except Exception as e:
             logging.error(e)
 
@@ -80,9 +81,6 @@ def schedule_news():
     logging.info("=====> Start to send daily news!")
     all_news_blocks = build_all_news_block()
     send_daily_news(slack_app.client, all_news_blocks)
-
-
-schedule_news()
 
 
 @app.route("/slack/events", methods=["POST"])
