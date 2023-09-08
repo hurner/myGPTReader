@@ -127,6 +127,7 @@ def get_twitter_post_urls_with_title(rss_url):
 
 def build_slack_blocks(title, news):
     logging.info(f"build_slack_blocks req title: {title}， news: {news}")
+    logging.info("test11111")
     content = []
 
     for news_item in news:
@@ -144,16 +145,12 @@ def build_slack_blocks(title, news):
             "text": ""
         }])
     data = {
-        "msg_type": "post",
-        "content": {
-            "post": {
-                "zh_cn": {
-                    "title": f"{title} # {TODAY.strftime('%Y-%m-%d')}",
-                    "content": content
-                }
-            }
+        "zh_cn": {
+            "title": f"{title} # {TODAY.strftime('%Y-%m-%d')}",
+            "content": content
         }
     }
+
     blocks = [
         {
             "type": "header",

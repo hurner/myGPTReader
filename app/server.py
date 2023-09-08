@@ -17,6 +17,8 @@ from app.rate_limiter import RateLimiter
 from app.user import get_user, is_premium_user, update_message_token_usage
 from app.util import md5
 import json
+import lark_oapi as lark
+from lark_oapi.api.im.v1 import *
 
 
 class Config:
@@ -41,6 +43,11 @@ slack_app = App(
 )
 slack_handler = SlackRequestHandler(slack_app)
 
+fs_client = lark.Client.builder() \
+    .app_id("cli_a47031a59de2900e") \
+    .app_secret("7HBsjbS85wexCymKwL9QjhNf5tDafdJy") \
+    .log_level(lark.LogLevel.INFO) \
+    .build()
 
 @slack_app.error
 def handle_errors(error):
@@ -56,13 +63,25 @@ scheduler.init_app(app)
 
 
 def send_daily_news(client, news):
-    url = 'https://open.feishu.cn/open-apis/bot/v2/hook/dbc053b0-8a21-4524-944a-dfc2ae6c1cad'
-    headers = {'Content-Type': 'application/json'}
-
     for news_item in news:
         try:
-            post = requests.post(url, headers=headers, data=json.dumps(news_item[0]))
-            logging.info(json.dumps(news_item[0]), post)
+            # 构造请求对象
+            fs_request: CreateMessageRequest = CreateMessageRequest.builder() \
+                .receive_id_type("chat_id") \
+                .request_body(CreateMessageRequestBody.builder()
+                              .receive_id("oc_eabe9628d54bbd39be3a02e6b868e919")
+                              .msg_type("post")
+                              .content(json.dumps(news_item[0]))
+                              .build()).build()
+            # 发起请求
+            response: CreateMessageResponse = fs_client.im.v1.message.create(fs_request)
+            # 处理失败返回
+            if not response.success():
+                lark.logger.error(
+                    f"client.im.v1.message.create failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
+            else:
+                # 处理业务结果
+                lark.logger.info(lark.JSON.marshal(response.data, indent=4))
 
             r = client.chat_postMessage(
                 channel=schedule_channel,
