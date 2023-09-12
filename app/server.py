@@ -19,6 +19,10 @@ from app.util import md5
 import json
 import lark_oapi as lark
 from lark_oapi.api.im.v1 import *
+from flask import Flask
+import lark_oapi as lark
+from lark_oapi.adapter.flask import *
+from lark_oapi.api.im.v1 import *
 
 
 class Config:
@@ -105,6 +109,25 @@ def schedule_news():
 @app.route("/slack/events", methods=["POST"])
 def slack_events():
     return slack_handler.handle(request)
+
+def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> None:
+    print(lark.JSON.marshal(data))
+
+
+def do_customized_event(data: lark.CustomizedEvent) -> None:
+    print(lark.JSON.marshal(data))
+
+
+handler = lark.EventDispatcherHandler.builder(lark.ENCRYPT_KEY, '4UKYXEgf20FkAHudbByJHeLFSGRihVWF', lark.LogLevel.DEBUG) \
+    .register_p2_im_message_receive_v1(do_p2_im_message_receive_v1) \
+    .register_p1_customized_event("message", do_customized_event) \
+    .build()
+
+@app.route("/feishu/events", methods=["POST"])
+def event():
+    resp = handler.do(parse_req())
+    return parse_resp(resp)
+
 
 
 def insert_space(text):
