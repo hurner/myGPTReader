@@ -110,15 +110,33 @@ def schedule_news():
 def slack_events():
     return slack_handler.handle(request)
 
+
 def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> None:
     print(lark.JSON.marshal(data))
+
+    # 构造请求对象
+    fs_request: ReplyMessageRequest = ReplyMessageRequest.builder() \
+        .request_body(ReplyMessageRequestBody.builder()
+                      .content("{\"text\":\"" + json.loads(data.event.message.content)['text'] + "\"}")
+                      .msg_type("text")
+                      .build()) \
+        .message_id(data.event.message.message_id).build()
+    # 发起请求
+    response: ReplyMessageResponse = fs_client.im.v1.message.reply(fs_request)
+    # 处理失败返回
+    if not response.success():
+        lark.logger.error(
+            f"client.im.v1.message.reply failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
+        return
+    # 处理业务结果
+    lark.logger.info(lark.JSON.marshal(response.data, indent=4))
 
 
 def do_customized_event(data: lark.CustomizedEvent) -> None:
     print(lark.JSON.marshal(data))
 
 
-handler = lark.EventDispatcherHandler.builder(lark.ENCRYPT_KEY, '4UKYXEgf20FkAHudbByJHeLFSGRihVWF', lark.LogLevel.DEBUG) \
+handler = lark.EventDispatcherHandler.builder('mQOn8IsWSqgp3pwLG7bOugfnHIimtLN5', '4UKYXEgf20FkAHudbByJHeLFSGRihVWF', lark.LogLevel.DEBUG) \
     .register_p2_im_message_receive_v1(do_p2_im_message_receive_v1) \
     .register_p1_customized_event("message", do_customized_event) \
     .build()
