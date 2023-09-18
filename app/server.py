@@ -111,13 +111,13 @@ def slack_events():
     return slack_handler.handle(request)
 
 
-def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> None:
-    print(lark.JSON.marshal(data))
-
+def reply(data: P2ImMessageReceiveV1):
     # 构造请求对象
     fs_request: ReplyMessageRequest = ReplyMessageRequest.builder() \
         .request_body(ReplyMessageRequestBody.builder()
-                      .content("{\"text\":\"" + json.loads(data.event.message.content)['text'] + "\"}")
+                      .content(
+        "{\"text\":\"" + str.replace(get_answer_from_chatGPT(json.loads(data.event.message.content)['text'])[0], '\n',
+                                     '\\n') + "\"}")
                       .msg_type("text")
                       .build()) \
         .message_id(data.event.message.message_id).build()
@@ -130,6 +130,13 @@ def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> None:
         return
     # 处理业务结果
     lark.logger.info(lark.JSON.marshal(response.data, indent=4))
+
+
+def do_p2_im_message_receive_v1(data: P2ImMessageReceiveV1) -> None:
+    print(lark.JSON.marshal(data))
+
+    executor.submit(reply, data)
+
 
 
 def do_customized_event(data: lark.CustomizedEvent) -> None:
