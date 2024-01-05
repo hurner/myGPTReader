@@ -8,30 +8,30 @@
             }
         }
     },
-    "twitter-akhaliq": {
-        "name": "twitter",
+    "twitter-0": {
+        "name": "twitter-0",
         "rss": {
             "hot": {
-                "name": "akhaliq Twitter",
-                "url": "https://nitter.net/_akhaliq/rss"
+                "name": "ylecun Twitter",
+                "url": "https://nitter.1d4.us/ylecun/rss"
             }
         }
     },
-    "twitter-brickroad7": {
-        "name": "brickroad7 Twitter",
+    "twitter-1": {
+        "name": "twitter-1",
         "rss": {
             "hot": {
                 "name": "brickroad7 Twitter",
-                "url": "https://nitter.net/brickroad7/rss"
+                "url": "https://nitter.1d4.us/brickroad7/rss"
             }
         }
     },
-    "twitter-teortaxesTex": {
-        "name": "teortaxesTex Twitter",
+    "twitter-2": {
+        "name": "twitter-2",
         "rss": {
             "hot": {
                 "name": "teortaxesTex Twitter",
-                "url": "https://nitter.net/teortaxesTex/rss"
+                "url": "https://nitter.1d4.us/teortaxesTex/rss"
             }
         }
     },

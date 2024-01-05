@@ -12,7 +12,7 @@ with open("app/data/hot_news_rss.json", "r") as f:
 
 TODAY = today = date.today()
 MAX_DESCRIPTION_LENGTH = 300
-MAX_POSTS = 3
+MAX_POSTS = 5
 
 
 def cut_string(text):
@@ -200,14 +200,14 @@ def build_twitter_hot_news_blocks(news_key):
 def build_openai_hot_news_blocks():
     return build_hot_news_blocks('OpenAI')
 
-def build_twitter_akhaliq_hot_news_blocks():
-    return build_twitter_hot_news_blocks('twitter-akhaliq')
+def build_twitter_0_hot_news_blocks():
+    return build_twitter_hot_news_blocks('twitter-0')
 
-def build_twitter_brickroad7_hot_news_blocks():
-    return build_twitter_hot_news_blocks('twitter-brickroad7')
+def build_twitter_1_hot_news_blocks():
+    return build_twitter_hot_news_blocks('twitter-1')
 
-def build_twitter_teortaxesTex_hot_news_blocks():
-    return build_twitter_hot_news_blocks('twitter-teortaxesTex')
+def build_twitter_2_hot_news_blocks():
+    return build_twitter_hot_news_blocks('twitter-2')
 
 def build_v2ex_hot_news_blocks():
     return build_hot_news_blocks('v2ex')
@@ -229,26 +229,26 @@ def build_all_news_block():
     with concurrent.futures.ThreadPoolExecutor() as executor:
 
         openai_news = executor.submit(build_openai_hot_news_blocks)
-        # twitter_akhaliq_news =  executor.submit(build_twitter_akhaliq_hot_news_blocks)
-        # twitter_brickroad7_news =  executor.submit(build_twitter_brickroad7_hot_news_blocks)
-        # twitter_teortaxesTex_news =  executor.submit(build_twitter_teortaxesTex_hot_news_blocks)
+        twitter_0_news =  executor.submit(build_twitter_0_hot_news_blocks)
+        twitter_1_news =  executor.submit(build_twitter_1_hot_news_blocks)
+        twitter_2_news =  executor.submit(build_twitter_2_hot_news_blocks)
 
         v2ex_news = executor.submit(build_v2ex_hot_news_blocks)
-        # reddit_news = executor.submit(build_reddit_news_hot_news_blocks)
+#        reddit_news = executor.submit(build_reddit_news_hot_news_blocks)
         hackernews_news = executor.submit(build_hackernews_news_hot_news_blocks)
         producthunt_news = executor.submit(build_producthunt_news_hot_news_blocks)
         xueqiu_news = executor.submit(build_xueqiu_news_hot_news_blocks)
 
         openai_news_block = openai_news.result()
-        # twitter_akhaliq_news_block = twitter_akhaliq_news.result()
-        # twitter_brickroad7_news_block = twitter_brickroad7_news.result()
-        # twitter_teortaxesTex_news_block = twitter_teortaxesTex_news.result()
+        twitter_0_news_block = twitter_0_news.result()
+        twitter_1_news_block = twitter_1_news.result()
+        twitter_2_news_block = twitter_2_news.result()
 
         v2ex_news_block = v2ex_news.result()
-        # reddit_news_block = reddit_news.result()
+#        reddit_news_block = reddit_news.result()
         hackernews_news_block = hackernews_news.result()
         producthunt_news_block = producthunt_news.result()
         xueqiu_news_block = xueqiu_news.result()
 
-        return [openai_news_block, v2ex_news_block,
-                hackernews_news_block, producthunt_news_block, xueqiu_news_block]
+        return [openai_news_block, v2ex_news_block, twitter_0_news_block, twitter_1_news_block, twitter_2_news_block,
+                            hackernews_news_block, producthunt_news_block, xueqiu_news_block]
