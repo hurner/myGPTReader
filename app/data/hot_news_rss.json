@@ -8,52 +8,6 @@
             }
         }
     },
-    "twitter-0": {
-        "name": "twitter-0",
-        "rss": {
-            "hot": {
-                "name": "ylecun Twitter",
-                "url": "https://nitter.1d4.us/ylecun/rss"
-            }
-        }
-    },
-    "twitter-1": {
-        "name": "twitter-1",
-        "rss": {
-            "hot": {
-                "name": "brickroad7 Twitter",
-                "url": "https://nitter.1d4.us/brickroad7/rss"
-            }
-        }
-    },
-    "twitter-2": {
-        "name": "twitter-2",
-        "rss": {
-            "hot": {
-                "name": "teortaxesTex Twitter",
-                "url": "https://nitter.1d4.us/teortaxesTex/rss"
-            }
-        }
-    },
-    "v2ex": {
-        "name": "V2EX",
-        "rss": {
-            "hot": {
-                "name": "V2EX 热榜",
-                "url": "https://rsshub.app/v2ex/topics/hot"
-            }
-        }
-    },
-    
-    "reddit-news": {
-        "name": "Reddit",
-        "rss": {
-            "hot": {
-                "name": "Reddit Hot News",
-                "url": "https://www.reddit.com/r/news+worldnews+geopolitics+China.hot.rss"
-            }
-        }
-    },
     "hackernews": {
         "name": "Hacker News",
         "rss": {
@@ -72,12 +26,97 @@
             }
         }
     },
-    "xueqiu": {
-        "name": "雪球",
+
+
+
+    "github-daily-trending": {
+        "name": "github-daily-trending",
         "rss": {
             "hot": {
-                "name": "雪球热榜",
-                "url": "https://rsshub.app/xueqiu/hots"
+                "name": "github-daily-trending",
+                "url": "https://rsshub.app/github/trending/daily/any/any"
+            }
+        }
+    },
+    "36kr-newsflashes-AI": {
+        "name": "36kr-newsflashes-AI",
+        "rss": {
+            "hot": {
+                "name": "36kr AI 快讯",
+                "url": "https://rsshub.app/36kr/search/newsflashes/AI"
+            }
+        }
+    },
+    "36kr-articles-AI": {
+        "name": "36kr-articles-AI",
+        "rss": {
+            "hot": {
+                "name": "36kr AI 资讯",
+                "url": "https://rsshub.app/36kr/search/articles/AI"
+            }
+        }
+    },
+    "CSDN-csdngeeknews": {
+        "name": "CSDN-csdngeeknews",
+        "rss": {
+            "hot": {
+                "name": "CSDN极客日报",
+                "url": "https://rsshub.app/csdn/blog/csdngeeknews"
+            }
+        }
+    },
+    "CSDN-csdnnews": {
+        "name": "CSDN-csdnnews",
+        "rss": {
+            "hot": {
+                "name": "CSDN资讯",
+                "url": "https://rsshub.app/csdn/blog/csdnnews"
+            }
+        }
+    },
+    "InfoQ-AI-LLM": {
+        "name": "InfoQ-AI-LLM",
+        "rss": {
+            "hot": {
+                "name": "InfoQ 话题 - AI&大模型",
+                "url": "https://rsshub.app/infoq/topic/31"
+            }
+        }
+    },
+    "qbitai-News": {
+        "name": "qbitai-News",
+        "rss": {
+            "hot": {
+                "name": "量子位资讯",
+                "url": "https://rsshub.app/qbitai/category/资讯"
+            }
+        }
+    },
+
+    "jiqizhixin-News": {
+        "name": "jiqizhixin-News",
+        "rss": {
+            "hot": {
+                "name": "机器之心",
+                "url": "https://www.jiqizhixin.com/rss"
+            }
+        }
+    },
+    "geekpark-News": {
+        "name": "geekpark-News",
+        "rss": {
+            "hot": {
+                "name": "极客公园",
+                "url": "https://rsshub.app/geekpark/breakingnews"
+            }
+        }
+    },
+    "zhidx-News": {
+        "name": "zhidx-News",
+        "rss": {
+            "hot": {
+                "name": "智东西",
+                "url": "https://zhidx.com/feed"
             }
         }
     }

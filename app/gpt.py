@@ -21,9 +21,9 @@ SPEECH_KEY = os.environ.get('SPEECH_KEY')
 SPEECH_REGION = os.environ.get('SPEECH_REGION')
 openai.api_key = OPENAI_API_KEY
 
-index_cache_web_dir = Path('/tmp/myGPTReader/cache_web/')
-index_cache_file_dir = Path('/data/myGPTReader/file/')
-index_cache_voice_dir = Path('/tmp/myGPTReader/voice/')
+index_cache_web_dir = Path('./tmp/myGPTReader/cache_web/')
+index_cache_file_dir = Path('./data/myGPTReader/file/')
+index_cache_voice_dir = Path('./tmp/myGPTReader/voice/')
 
 if not index_cache_web_dir.is_dir():
     index_cache_web_dir.mkdir(parents=True, exist_ok=True)
@@ -107,7 +107,7 @@ def get_index_name_from_file(file: str):
 def get_answer_from_chatGPT(messages):
     dialog_messages = format_dialog_messages(messages)
     logging.info('=====> Use chatGPT to answer!')
-    logging.info(dialog_messages)
+    #logging.info(dialog_messages)
     completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": dialog_messages}]
@@ -126,7 +126,8 @@ def get_answer_from_llama_web(messages, urls):
     if index is None:
         logging.info(f"=====> Build index from web!")
         documents = get_documents_from_urls(combained_urls)
-        logging.info(documents)
+        #logging.info(documents)
+        logging.info("documents")
         index = GPTVectorStoreIndex.from_documents(documents, service_context=service_context)
         index.set_index_id(index_file_name)
         index.storage_context.persist()
