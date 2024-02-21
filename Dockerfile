@@ -14,4 +14,4 @@ RUN mkdir /data && mkdir /data/myGPTReader
 
 EXPOSE 8080
 
-CMD ["gunicorn", "app.server:app --timeout=0"]
+CMD ["gunicorn", "app.server:app", "timeout=0"]
