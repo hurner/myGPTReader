@@ -15,6 +15,8 @@ TODAY = today = date.today()
 MAX_DESCRIPTION_LENGTH = 300
 MAX_POSTS = 10
 
+isHarvestWeb = False
+
 
 def cut_string(text):
     words = text.split()
@@ -41,9 +43,11 @@ def get_translation_from_gpt_thread(description):
     return str(gpt_response)
 
 def get_summary_from_gpt_thread(description):
-    news_translation_prompt = '请用中文简短概括这篇文章的内容。\n' + description
+    news_translation_prompt = '请用中文简短给出下面这段文字的摘要，并且列出其中可能存在的 AI 工具产品。摘要与工具产品间以两行换行符分隔。\n' + description
     gpt_response, total_llm_model_tokens, total_embedding_model_tokens = get_answer_from_chatGPT([news_translation_prompt])
     logging.info(f"=====> GPT response: {gpt_response} (total_llm_model_tokens: {total_llm_model_tokens}, total_embedding_model_tokens: {total_embedding_model_tokens}")
+    logging.info("==============get_summary_from_gpt_thread DONE===================")
+    time.sleep(2) 
     return str(gpt_response)
 
 def get_summary_from_gpt(url):
@@ -59,13 +63,16 @@ def get_translation_from_gpt(description):
 def get_description(entry):
     gpt_answer = None
     summary = None
+    global isHarvestWeb
 
     #如果是 productHunt, HackerNews， V2ex, V2ex, 雪球，就使用抓取网页内容进行摘要。
     #如果是国内 description 是真的简介，少于多少字的。
     #如果是国内 description 是全文的，则。
 
-    match = ['producthunt', 'HackerNews', 'V2ex', 'V2ex','xueqiu']
-    if any (c in entry.link for c in match):
+    logging.info("get_description")
+    logging.info(isHarvestWeb)
+
+    if isHarvestWeb:
         try:
             gpt_answer = get_summary_from_gpt(entry.link)
         except Exception as e:
@@ -78,9 +85,17 @@ def get_description(entry):
         if entry.description != None and len(entry.description) > 0:
             if len(entry.description) < 300:
                 summary = get_text_from_html(entry.description)
+                logging.info("<300" + summary)
             else:
-                #summary = get_summary_from_gpt_thread(get_text_from_html(entry.description))
-                summary = get_text_from_html(entry.description)[:300] + "......"
+                try:
+                    summary = get_summary_from_gpt_thread(get_text_from_html(entry.description))
+                    #summary = cut_string(get_text_from_html(entry.description))
+                except Exception as e:
+                    logging.error(e)
+                if summary is not None:
+                    summary = 'AI: ' + summary
+                else:
+                    summary = cut_string(get_text_from_html(entry.summary))
     
     return summary
 
@@ -108,10 +123,19 @@ def get_post_urls_with_title(rss_url):
     feed = feedparser.parse(rss_url)
     updated_posts = []
 
+    logging.info(f"==============================={rss_url}===========================================")
+    logging.info(f"==============================={rss_url}===========================================")
+    logging.info(f"==============================={rss_url}===========================================")
 
-    logging.info('==========================================================================')
-    logging.info(rss_url)
+    global isHarvestWeb
     
+    isHarvestWeb = False
+    match = ['hackernews']
+    if any (c in rss_url for c in match):
+        isHarvestWeb = True
+    
+    logging.info(isHarvestWeb)
+
     for entry in feed.entries:
         published_time = entry.published_parsed if 'published_parsed' in entry else None
         # published_date = date(published_time.tm_year,
@@ -125,7 +149,9 @@ def get_post_urls_with_title(rss_url):
         updated_posts.append(updated_post)
         if len(updated_posts) >= MAX_POSTS:
             break
-        
+    
+    isHarvestWeb = False
+
     return updated_posts
 
 def get_twitter_post_urls_with_title(rss_url):
@@ -212,8 +238,10 @@ def build_slack_blocks(title, news):
 def build_hot_news_blocks(news_key):
     rss = rss_urls[news_key]['rss']['hot']
     hot_news = get_post_urls_with_title(rss['url'])
+#    logging.info(hot_news)
     hot_news_blocks = build_slack_blocks(
         rss['name'], hot_news)
+#    logging.info(hot_news_blocks)
     return hot_news_blocks
 
 def build_twitter_hot_news_blocks(news_key):
@@ -285,7 +313,7 @@ def build_zhidx_News_blocks():
 
 
 def build_all_news_block():
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+#    with concurrent.futures.ThreadPoolExecutor() as executor:
 
 #        openai_news = executor.submit(build_openai_hot_news_blocks)
         # twitter_0_news =  executor.submit(build_twitter_0_hot_news_blocks)
@@ -298,36 +326,30 @@ def build_all_news_block():
 #        producthunt_news = executor.submit(build_producthunt_news_hot_news_blocks)
 #        xueqiu_news = executor.submit(build_xueqiu_news_hot_news_blocks)
 
-        github_news = executor.submit(build_github_trending_hot_news_blocks)
-        kr_newsflashes_AI = executor.submit(build_36kr_newsflashes_AI_blocks)
-        kr_articles_AI = executor.submit(build_36kr_articles_AI_blocks)
-        csdngeeknews = executor.submit(build_csdngeeknews_blocks)
-        csdnnews = executor.submit(build_csdnnews_blocks)
-        InfoQ_AI_LLM = executor.submit(build_InfoQ_AI_LLM_blocks)
-        qbitai_News = executor.submit(build_qbitai_News_blocks)
-        jiqizhixin_News = executor.submit(build_jiqizhixin_News_blocks)
-        geekpark_News = executor.submit(build_geekpark_News_blocks)
-        zhidx_News = executor.submit(build_zhidx_News_blocks)
+        # github_news = executor.submit(build_github_trending_hot_news_blocks)
+        # kr_newsflashes_AI = executor.submit(build_36kr_newsflashes_AI_blocks)
+        # kr_articles_AI = executor.submit(build_36kr_articles_AI_blocks)
+        # csdngeeknews = executor.submit(build_csdngeeknews_blocks)
+        # csdnnews = executor.submit(build_csdnnews_blocks)
+        # InfoQ_AI_LLM = executor.submit(build_InfoQ_AI_LLM_blocks)
+        # qbitai_News = executor.submit(build_qbitai_News_blocks)
+        # jiqizhixin_News = executor.submit(build_jiqizhixin_News_blocks)
+        # geekpark_News = executor.submit(build_geekpark_News_blocks)
+        # zhidx_News = executor.submit(build_zhidx_News_blocks)
 
 
-
-        # github_news = build_github_trending_hot_news_blocks()
-        # kr_newsflashes_AI = build_36kr_newsflashes_AI_blocks()
-        # kr_articles_AI = build_36kr_articles_AI_blocks()
-        # csdngeeknews = build_csdngeeknews_blocks()
-        # csdnnews = build_csdnnews_blocks()
-        # InfoQ_AI_LLM = build_InfoQ_AI_LLM_blocks()
-        # qbitai_News = build_qbitai_News_blocks()
-        # jiqizhixin_News = build_jiqizhixin_News_blocks()
-        # geekpark_News = build_geekpark_News_blocks()
-        # zhidx_News = build_zhidx_News_blocks()
-
-
-
-
-        # logging.info('等待 5 s')
-        # time.sleep(5) 
-
+        hackernews_news = build_hackernews_news_hot_news_blocks()
+        producthunt_news = build_producthunt_news_hot_news_blocks()
+        github_news = build_github_trending_hot_news_blocks()
+        kr_newsflashes_AI = build_36kr_newsflashes_AI_blocks()
+        kr_articles_AI = build_36kr_articles_AI_blocks()
+        csdngeeknews = build_csdngeeknews_blocks()
+        csdnnews = build_csdnnews_blocks()
+        InfoQ_AI_LLM = build_InfoQ_AI_LLM_blocks()
+        qbitai_News = build_qbitai_News_blocks()
+        jiqizhixin_News = build_jiqizhixin_News_blocks()
+        geekpark_News = build_geekpark_News_blocks()
+        zhidx_News = build_zhidx_News_blocks()
 
 
 #        openai_news_block = openai_news.result()
@@ -341,23 +363,20 @@ def build_all_news_block():
 #        producthunt_news_block = producthunt_news.result()
 #        xueqiu_news_block = xueqiu_news.result()
 
-        github_news_block = github_news.result()
-        kr_newsflashes_AI_blocks = kr_newsflashes_AI.result()
-        kr_articles_AI_blocks = kr_articles_AI.result()
+        hackernews_news_block = hackernews_news
+        producthunt_news_block = producthunt_news
+        github_news_block = github_news
+        kr_newsflashes_AI_blocks = kr_newsflashes_AI
+        kr_articles_AI_blocks = kr_articles_AI
+        csdngeeknews_blocks = csdngeeknews
+        csdnnews_blocks = csdnnews
+        InfoQ_AI_LLM_blocks = InfoQ_AI_LLM
+        qbitai_News_blocks = qbitai_News
+        jiqizhixin_News_blocks = jiqizhixin_News
+        geekpark_News_blocks = geekpark_News
+        zhidx_News_blocks = zhidx_News
 
-        csdngeeknews_blocks = csdngeeknews.result()
-        csdnnews_blocks = csdnnews.result()
-        InfoQ_AI_LLM_blocks = InfoQ_AI_LLM.result()
-        qbitai_News_blocks = qbitai_News.result()
+        return [hackernews_news_block,producthunt_news_block,github_news_block, kr_newsflashes_AI_blocks,
+            kr_articles_AI_blocks,csdngeeknews_blocks,csdnnews_blocks,InfoQ_AI_LLM_blocks,
+            jiqizhixin_News_blocks,zhidx_News_blocks,qbitai_News_blocks,geekpark_News_blocks]
 
- 
-        jiqizhixin_News_blocks = jiqizhixin_News.result()
-        geekpark_News_blocks = geekpark_News.result()
-        
-
-        zhidx_News_blocks = zhidx_News.result()
-
-        return [github_news_block, kr_newsflashes_AI_blocks,kr_articles_AI_blocks,
-                csdngeeknews_blocks,csdnnews_blocks,InfoQ_AI_LLM_blocks,
-                qbitai_News_blocks,jiqizhixin_News_blocks,geekpark_News_blocks,
-                zhidx_News_blocks]
